@@ -4,10 +4,84 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("USER")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ProcessCategory {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  status      String       @default("ACTIVE")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  forms       FormConfig[]
+}
+
+model FormConfig {
+  id          String          @id @default(uuid())
+  name        String
+  categoryId  String
+  schemaJson  String?
+  status      String          @default("ACTIVE")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  category    ProcessCategory @relation(fields: [categoryId], references: [id])
+  models      ProcessModel[]
+}
+
+model ProcessModel {
+  id          String       @id @default(uuid())
+  name        String
+  formId      String
+  version     String       @default("v1")
+  status      String       @default("DRAFT")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  form        FormConfig   @relation(fields: [formId], references: [id])
+  nodes       ProcessNode[]
+  deployments Deployment[]
+}
+
+model ProcessNode {
+  id                String       @id @default(uuid())
+  modelId           String
+  nodeKey           String
+  nodeName          String
+  nodeType          String
+  branchGroup       String?
+  conditionField    String?
+  conditionOperator String?
+  conditionValue    String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  model             ProcessModel @relation(fields: [modelId], references: [id])
+}
+
+model Deployment {
+  id           String       @id @default(uuid())
+  deploymentId String       @unique
+  modelId      String
+  environment  String
+  deployTime   DateTime?
+  publishedBy  String?
+  status       String       @default("PUBLISHED")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  model        ProcessModel @relation(fields: [modelId], references: [id])
 }
