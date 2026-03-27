@@ -11,14 +11,34 @@ export class UsersService {
   findAll() {
     return this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
-      select: { id: true, username: true, name: true, role: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        phone: true,
+        department: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
     });
   }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: { id: true, username: true, name: true, role: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        phone: true,
+        department: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
     });
     if (!user) throw new NotFoundException('用户不存在');
     return user;
@@ -33,11 +53,24 @@ export class UsersService {
       data: {
         username: dto.username,
         name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        department: dto.department,
         passwordHash,
         role: dto.role ?? 'USER',
         status: dto.status ?? 'ACTIVE',
       },
-      select: { id: true, username: true, name: true, role: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        phone: true,
+        department: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
     });
   }
 
@@ -54,11 +87,24 @@ export class UsersService {
       where: { id },
       data: {
         name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        department: dto.department,
         role: dto.role,
         status: dto.status,
         ...(passwordHash ? { passwordHash } : {}),
       },
-      select: { id: true, username: true, name: true, role: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        phone: true,
+        department: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
     });
   }
 
