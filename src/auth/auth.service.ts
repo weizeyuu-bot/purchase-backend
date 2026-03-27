@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -24,15 +25,60 @@ export class AuthService {
 
     const payload = { sub: user.id, username: user.username, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload);
+    const normalizedUser = {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    };
 
     return {
-      accessToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        role: user.role,
-        status: user.status,
+      success: true,
+      token: accessToken,
+      user: normalizedUser,
+      data: {
+        accessToken,
+        user: normalizedUser,
+      },
+    };
+  }
+
+  async refresh(token: string, dto?: RefreshTokenDto) {
+    let payload: { sub: string; username?: string; role?: string };
+
+    try {
+      payload = await this.jwtService.verifyAsync(token);
+    } catch {
+      throw new UnauthorizedException('令牌无效或已过期');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    if (dto?.username && dto.username !== user.username) {
+      throw new UnauthorizedException('令牌与用户不匹配');
+    }
+
+    const nextPayload = { sub: user.id, username: user.username, role: user.role };
+    const accessToken = await this.jwtService.signAsync(nextPayload);
+    const normalizedUser = {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    };
+
+    return {
+      success: true,
+      token: accessToken,
+      user: normalizedUser,
+      data: {
+        accessToken,
+        user: normalizedUser,
       },
     };
   }
